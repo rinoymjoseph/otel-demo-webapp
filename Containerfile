@@ -4,6 +4,12 @@ FROM registry.access.redhat.com/ubi9/nodejs-18-minimal AS build
 # Set work directory
 WORKDIR /app
 
+# Ensure permissions for the /app directory
+RUN chown -R 1001:0 /app && chmod -R 775 /app
+
+# Switch to a non-root user (default user for ubi minimal images)
+USER 1001
+
 # Install dependencies
 COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps
