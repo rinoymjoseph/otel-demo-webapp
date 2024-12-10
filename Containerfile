@@ -20,23 +20,12 @@ COPY --chown=1001:0 . ./
 # Build the app
 RUN npm run build
  
-# Stage 2: Serve the app with Apache HTTPD
-FROM registry.access.redhat.com/ubi9/httpd-24:1-336.1729775640
+# Stage 2: Serve the app with a smaller Apache image
+FROM httpd:alpine
 
-# Copy the build output from the first stage
-COPY --from=build /app/dist /var/www/html
+COPY --from=build /app/dist /usr/local/apache2/htdocs/
+COPY httpd.conf /usr/local/apache2/conf/httpd.conf
 
-# Disable SSL by modifying Apache's configuration
-RUN sed -i 's/^LoadModule ssl_module/#LoadModule ssl_module/' /etc/httpd/conf.d/ssl.conf && \
-    sed -i 's/^Listen 443/Listen 80/' /etc/httpd/conf.d/ssl.conf && \
-    sed -i '/<VirtualHost *:443>/,/<\/VirtualHost>/d' /etc/httpd/conf.d/ssl.conf && \
-    rm -f /etc/httpd/conf.d/ssl.conf
-
-# Set ServerName to avoid the warning
-RUN echo "ServerName localhost" >> /etc/httpd/conf/httpd.conf
-
-# Expose the default HTTP port
 EXPOSE 8080
 
-# Start the Apache HTTP server
 CMD ["httpd", "-D", "FOREGROUND"]
