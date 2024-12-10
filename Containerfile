@@ -19,12 +19,12 @@ COPY --chown=1001:0 . ./
 
 # Build the app
 RUN npm run build
-
+ 
 # Stage 2: Serve the app with Apache HTTPD
 FROM registry.access.redhat.com/ubi9/httpd-24:1-336.1729775640
 
 # Copy the build output from the first stage
-COPY --from=build /app/build /var/www/html
+COPY --from=build /app/dist /var/www/html
 
 # Expose the default HTTP port
 EXPOSE 8080
