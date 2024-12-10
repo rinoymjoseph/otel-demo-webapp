@@ -4,24 +4,24 @@ FROM registry.access.redhat.com/ubi9/nodejs-18-minimal AS build
 # Set work directory
 WORKDIR /app
 
-# Ensure permissions for the /app directory
-RUN chown -R 1001:0 /app && chmod -R 775 /app
+# Copy package files and set permissions
+COPY --chown=1001:0 package.json package-lock.json ./
 
-# Switch to a non-root user (default user for ubi minimal images)
+# Ensure appropriate permissions
+RUN chmod 664 package.json package-lock.json
+
+# Install dependencies as non-root user (default in ubi minimal images)
 USER 1001
-
-# Install dependencies
-COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps
 
 # Copy the rest of the app source code
-COPY . ./
+COPY --chown=1001:0 . ./
 
 # Build the app
 RUN npm run build
 
 # Stage 2: Serve the app with Apache HTTPD
-FROM registry.access.redhat.com/ubi9/httpd-24-minimal
+FROM registry.access.redhat.com/ubi9/httpd-24:1-336.1729775640
 
 # Copy the build output from the first stage
 COPY --from=build /app/build /var/www/html
