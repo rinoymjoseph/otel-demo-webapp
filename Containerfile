@@ -26,6 +26,15 @@ FROM registry.access.redhat.com/ubi9/httpd-24:1-336.1729775640
 # Copy the build output from the first stage
 COPY --from=build /app/dist /var/www/html
 
+# Disable SSL by modifying Apache's configuration
+RUN sed -i 's/^LoadModule ssl_module/#LoadModule ssl_module/' /etc/httpd/conf.d/ssl.conf && \
+    sed -i 's/^Listen 443/Listen 80/' /etc/httpd/conf.d/ssl.conf && \
+    sed -i '/<VirtualHost *:443>/,/<\/VirtualHost>/d' /etc/httpd/conf.d/ssl.conf && \
+    rm -f /etc/httpd/conf.d/ssl.conf
+
+# Set ServerName to avoid the warning
+RUN echo "ServerName localhost" >> /etc/httpd/conf/httpd.conf
+
 # Expose the default HTTP port
 EXPOSE 8080
 
